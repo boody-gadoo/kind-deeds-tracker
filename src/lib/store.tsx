@@ -22,7 +22,7 @@ const names: Record<string, string[]> = {
 export const products: Product[] = categories.flatMap((c, ci) =>
   names[c.id]!.map((n, i) => {
     const price = 250 + ((ci * 4 + i) * 73) % 400;
-    return { id: `${c.id}-${i}`, name: n, cat: c.id, price, old: i % 2 ? undefined : price + 120, img: imgs[c.id], tag: i === 0 ? "جديد" : i === 2 ? "الأكثر مبيعاً" : undefined };
+    return { id: `${c.id}-${i}`, name: n, cat: c.id, price, old: i % 2 ? undefined : price + 120, img: imgs[c.id]!, tag: i === 0 ? "جديد" : i === 2 ? "الأكثر مبيعاً" : undefined };
   }),
 );
 
