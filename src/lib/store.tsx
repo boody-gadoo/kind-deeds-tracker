@@ -1,70 +1,68 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import p1 from "@/assets/p1.jpg";
-import p2 from "@/assets/p2.jpg";
-import p3 from "@/assets/p3.jpg";
-
-export type Product = { id: string; name: string; cat: string; price: number; old?: number | undefined; img: string; tag?: string | undefined };
+import type { Product } from "./floukaa.functions";
 
 export const categories = [
-  { id: "necklaces", name: "سلاسل" },
-  { id: "rings", name: "خواتم" },
-  { id: "earrings", name: "حلقان" },
-  { id: "bracelets", name: "أساور" },
+  { id: 207, name: "سلاسل" },
+  { id: 209, name: "أساور" },
+  { id: 262, name: "خواتم" },
+  { id: 255, name: "حلقان" },
+  { id: 208, name: "خلخال" },
+  { id: 335, name: "بروش" },
+  { id: 302, name: "بيرسينج" },
+  { id: 293, name: "مداليا" },
+  { id: 322, name: "توكة" },
+  { id: 328, name: "شنط" },
+  { id: 333, name: "ساعات" },
+  { id: 309, name: "أطفال" },
 ];
+export const SALE_CAT = 579;
 
-const imgs: Record<string, string> = { necklaces: p1, rings: p2, earrings: p3, bracelets: p3 };
-const names: Record<string, string[]> = {
-  necklaces: ["سلسلة لؤلؤة ذهبي", "سلسلة حرف اسم", "سلسلة طبقات", "سلسلة فراشة"],
-  rings: ["خاتم ستاكينج", "خاتم مطفي ذهبي", "خاتم زركون", "خاتم موجة"],
-  earrings: ["حلق لؤلؤ نقطة", "حلق هوب صغير", "حلق نجمة", "حلق كريستال"],
-  bracelets: ["أسورة لؤلؤ", "أسورة سلسلة", "أسورة حجر قمر", "أسورة قلوب"],
-};
-export const products: Product[] = categories.flatMap((c, ci) =>
-  names[c.id]!.map((n, i) => {
-    const price = 250 + ((ci * 4 + i) * 73) % 400;
-    return { id: `${c.id}-${i}`, name: n, cat: c.id, price, old: i % 2 ? undefined : price + 120, img: imgs[c.id]!, tag: i === 0 ? "جديد" : i === 2 ? "الأكثر مبيعاً" : undefined };
-  }),
-);
-
-export const egp = (n: number) => `${n.toLocaleString("ar-EG")} ج.م`;
+export const egp = (n: number) => `${n.toLocaleString("en-EG")} ج.م`;
 export const SHIPPING = 60;
 export const FREE_SHIP_OVER = 1000;
 export const shippingFor = (subtotal: number) => (subtotal >= FREE_SHIP_OVER || subtotal === 0 ? 0 : SHIPPING);
 
+export type CartItem = { id: number; name: string; price: number; img: string; qty: number };
+type Mini = Pick<Product, "id" | "name" | "price" | "img">;
+
 type Ctx = {
-  cart: Record<string, number>;
-  fav: string[];
-  add: (id: string) => void;
-  setQty: (id: string, q: number) => void;
-  toggleFav: (id: string) => void;
+  cart: CartItem[];
+  fav: Mini[];
+  add: (p: Mini) => void;
+  setQty: (id: number, q: number) => void;
+  toggleFav: (p: Mini) => void;
   clear: () => void;
 };
 const C = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<Record<string, number>>({});
-  const [fav, setFav] = useState<string[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [fav, setFav] = useState<Mini[]>([]);
+  const [ready, setReady] = useState(false);
   useEffect(() => {
     try {
-      setCart(JSON.parse(localStorage.getItem("fk-cart") || "{}"));
-      setFav(JSON.parse(localStorage.getItem("fk-fav") || "[]"));
+      const c = JSON.parse(localStorage.getItem("fk-cart2") || "[]");
+      const f = JSON.parse(localStorage.getItem("fk-fav2") || "[]");
+      if (Array.isArray(c)) setCart(c);
+      if (Array.isArray(f)) setFav(f);
     } catch {}
+    setReady(true);
   }, []);
-  useEffect(() => localStorage.setItem("fk-cart", JSON.stringify(cart)), [cart]);
-  useEffect(() => localStorage.setItem("fk-fav", JSON.stringify(fav)), [fav]);
+  useEffect(() => { if (ready) localStorage.setItem("fk-cart2", JSON.stringify(cart)); }, [cart, ready]);
+  useEffect(() => { if (ready) localStorage.setItem("fk-fav2", JSON.stringify(fav)); }, [fav, ready]);
   const value: Ctx = {
     cart,
     fav,
-    add: (id) => setCart((c) => ({ ...c, [id]: (c[id] || 0) + 1 })),
-    setQty: (id, q) =>
+    add: (p) =>
       setCart((c) => {
-        const n = { ...c };
-        if (q <= 0) delete n[id];
-        else n[id] = q;
-        return n;
+        const e = c.find((x) => x.id === p.id);
+        if (e) return c.map((x) => (x.id === p.id ? { ...x, qty: x.qty + 1 } : x));
+        return [...c, { id: p.id, name: p.name, price: p.price, img: p.img, qty: 1 }];
       }),
-    toggleFav: (id) => setFav((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id])),
-    clear: () => setCart({}),
+    setQty: (id, q) => setCart((c) => (q <= 0 ? c.filter((x) => x.id !== id) : c.map((x) => (x.id === id ? { ...x, qty: q } : x)))),
+    toggleFav: (p) =>
+      setFav((f) => (f.some((x) => x.id === p.id) ? f.filter((x) => x.id !== p.id) : [...f, { id: p.id, name: p.name, price: p.price, img: p.img }])),
+    clear: () => setCart([]),
   };
   return <C.Provider value={value}>{children}</C.Provider>;
 }
