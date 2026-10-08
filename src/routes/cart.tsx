@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { egp, FREE_SHIP_OVER, products, shippingFor, useStore } from "@/lib/store";
-import { AppShell, TopBar } from "@/components/shop";
+import { egp, FREE_SHIP_OVER, shippingFor, useStore } from "@/lib/store";
+import { SiteShell } from "@/components/shop";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
     meta: [
-      { title: "السلة — Floukaa" },
-      { name: "description", content: "راجعي طلبك قبل الدفع." },
-      { property: "og:title", content: "السلة — Floukaa" },
+      { title: "سلة التسوق — فلوكه" },
+      { name: "description", content: "راجع طلبك قبل إتمام الشراء." },
+      { property: "og:title", content: "سلة التسوق — فلوكه" },
       { property: "og:description", content: "سلة التسوق." },
     ],
   }),
@@ -16,45 +16,43 @@ export const Route = createFileRoute("/cart")({
 
 function Cart() {
   const { cart, setQty } = useStore();
-  const items = products.filter((p) => (cart[p.id] ?? 0));
-  const sub = items.reduce((s, p) => s + p.price * (cart[p.id] ?? 0), 0);
+  const sub = cart.reduce((s, p) => s + p.price * p.qty, 0);
   const ship = shippingFor(sub);
   return (
-    <AppShell>
-      <TopBar title="السلة" />
-      {!items.length ? (
-        <div className="py-24 text-center text-sm text-muted-foreground">السلة فاضية<Link to="/shop" className="mt-4 block text-primary">تسوقي دلوقتي</Link></div>
+    <SiteShell>
+      <h1 className="mt-10 mb-8 text-3xl font-bold">سلة التسوق</h1>
+      {!cart.length ? (
+        <div className="py-24 text-center text-muted-foreground">السلة فاضية<Link to="/shop" className="mt-4 block text-primary">تسوق دلوقتي</Link></div>
       ) : (
-        <div className="space-y-4 p-4">
-          {sub < FREE_SHIP_OVER && (
-            <div className="rounded-xl bg-secondary p-3 text-xs">فاضل {egp(FREE_SHIP_OVER - sub)} وتاخدي شحن مجاني</div>
-          )}
-          {items.map((p) => (
-            <div key={p.id} className="flex gap-3">
-              <img src={p.img} alt={p.name} className="h-24 w-20 shrink-0 rounded-xl bg-muted object-cover" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{p.name}</p>
-                <p className="text-sm font-bold">{egp(p.price)}</p>
-                <div className="mt-2 inline-flex items-center gap-3 rounded-full border px-3 py-1 text-sm">
-                  <button onClick={() => setQty(p.id, (cart[p.id] ?? 0) + 1)}>+</button>
-                  <span>{(cart[p.id] ?? 0)}</span>
-                  <button onClick={() => setQty(p.id, (cart[p.id] ?? 0) - 1)}>−</button>
+        <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
+          <div className="divide-y">
+            {cart.map((p) => (
+              <div key={p.id} className="flex gap-5 py-5">
+                <img src={p.img} alt={p.name} className="h-28 w-28 shrink-0 rounded-xl bg-muted object-cover" />
+                <div className="min-w-0 flex-1">
+                  <Link to="/product/$id" params={{ id: String(p.id) }} className="font-medium">{p.name}</Link>
+                  <p className="mt-1 font-bold">{egp(p.price)}</p>
+                  <div className="mt-3 inline-flex items-center gap-4 rounded-full border px-4 py-1">
+                    <button onClick={() => setQty(p.id, p.qty + 1)}>+</button><span>{p.qty}</span><button onClick={() => setQty(p.id, p.qty - 1)}>−</button>
+                  </div>
                 </div>
+                <button onClick={() => setQty(p.id, 0)} className="self-start text-sm text-muted-foreground">حذف</button>
               </div>
-            </div>
-          ))}
-          <div className="space-y-1 border-t pt-4 text-sm">
+            ))}
+          </div>
+          <aside className="h-fit space-y-3 rounded-2xl bg-secondary p-6">
+            {sub < FREE_SHIP_OVER && <p className="text-sm">فاضل {egp(FREE_SHIP_OVER - sub)} للشحن المجاني</p>}
             <Row a="المجموع" b={egp(sub)} />
             <Row a="الشحن" b={ship ? egp(ship) : "مجاني"} />
-            <Row a="الإجمالي" b={egp(sub + ship)} bold />
-          </div>
-          <Link to="/checkout" className="block rounded-full bg-primary py-3 text-center font-bold text-primary-foreground">إتمام الطلب</Link>
+            <div className="border-t pt-3"><Row a="الإجمالي" b={egp(sub + ship)} bold /></div>
+            <Link to="/checkout" className="block rounded-full bg-primary py-3 text-center font-bold text-primary-foreground">إتمام الطلب</Link>
+          </aside>
         </div>
       )}
-    </AppShell>
+    </SiteShell>
   );
 }
 
-export function Row({ a, b, bold }: { a: string; b: string; bold?: boolean }) {
-  return <div className={`flex justify-between ${bold ? "text-base font-bold" : ""}`}><span>{a}</span><span>{b}</span></div>;
+function Row({ a, b, bold }: { a: string; b: string; bold?: boolean }) {
+  return <div className={`flex justify-between ${bold ? "text-lg font-bold" : ""}`}><span>{a}</span><span>{b}</span></div>;
 }
