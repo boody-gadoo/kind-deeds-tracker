@@ -4,7 +4,7 @@ import { categories, products } from "@/lib/store";
 import { AppShell, ProductCard } from "@/components/shop";
 
 export const Route = createFileRoute("/shop")({
-  validateSearch: (s: Record<string, unknown>) => ({ cat: typeof s.cat === "string" ? s.cat : undefined }),
+  validateSearch: (s: Record<string, unknown>): { cat?: string } => ({ cat: typeof s["cat"] === "string" ? s["cat"] : undefined }),
   head: () => ({
     meta: [
       { title: "تسوق — Floukaa" },
