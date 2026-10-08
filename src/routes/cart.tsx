@@ -16,8 +16,8 @@ export const Route = createFileRoute("/cart")({
 
 function Cart() {
   const { cart, setQty } = useStore();
-  const items = products.filter((p) => cart[p.id]);
-  const sub = items.reduce((s, p) => s + p.price * cart[p.id], 0);
+  const items = products.filter((p) => (cart[p.id] ?? 0));
+  const sub = items.reduce((s, p) => s + p.price * (cart[p.id] ?? 0), 0);
   const ship = shippingFor(sub);
   return (
     <AppShell>
@@ -36,9 +36,9 @@ function Cart() {
                 <p className="truncate text-sm font-medium">{p.name}</p>
                 <p className="text-sm font-bold">{egp(p.price)}</p>
                 <div className="mt-2 inline-flex items-center gap-3 rounded-full border px-3 py-1 text-sm">
-                  <button onClick={() => setQty(p.id, cart[p.id] + 1)}>+</button>
-                  <span>{cart[p.id]}</span>
-                  <button onClick={() => setQty(p.id, cart[p.id] - 1)}>−</button>
+                  <button onClick={() => setQty(p.id, (cart[p.id] ?? 0) + 1)}>+</button>
+                  <span>{(cart[p.id] ?? 0)}</span>
+                  <button onClick={() => setQty(p.id, (cart[p.id] ?? 0) - 1)}>−</button>
                 </div>
               </div>
             </div>
